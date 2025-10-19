@@ -49,6 +49,7 @@ class TrieDictionary(BoggleDictionary):
         Otherwise, returns the TrieNode referenced by `prefix`.
         """
         current_node = self.root
+        prefix = prefix.upper()
         for letter in prefix:
             if letter not in current_node.children:
                 return None
@@ -56,12 +57,12 @@ class TrieDictionary(BoggleDictionary):
         return current_node
 
     def is_prefix(self, prefix: str) -> bool:
-        if self.traverse(prefix) is not None:
+        if self.traverse(prefix.upper()) is not None:
             return True
         return False
 
     def contains(self, word: str) -> bool:
-        node = self.traverse(word)
+        node = self.traverse(word.upper())
         if node is not None and node.is_word:
             return True
         return False
