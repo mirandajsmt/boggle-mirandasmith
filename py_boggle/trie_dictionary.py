@@ -29,9 +29,18 @@ class TrieDictionary(BoggleDictionary):
         # Remember to add every word to the trie, not just the words over some length.
         with open(filename) as wordsfile:
             for line in wordsfile:
-                word = line.strip().lower()
-                # Do something with word here
-        raise NotImplementedError("method load_dictionary") # TODO: implement your code here
+                word = line.strip().upper()
+                if not word:
+                    continue # skip empty lines
+
+                current_node = self.root # start at the root
+
+                for letter in word:
+                    if letter not in current_node.children:
+                        current_node.children[letter] = TrieNode()
+                    current_node = current_node.children[letter]
+
+                current_node.is_word = True # mark the end of the word
 
     def traverse(self, prefix: str) -> Optional[TrieNode]:
         """
@@ -39,14 +48,30 @@ class TrieDictionary(BoggleDictionary):
         If there is ever a missing child node, then returns None.
         Otherwise, returns the TrieNode referenced by `prefix`.
         """
-        raise NotImplementedError("method traverse") # TODO: implement your code here
+        current_node = self.root
+        for letter in prefix:
+            if letter not in current_node.children:
+                return None
+            current_node = current_node.children[letter]
+        return current_node
 
     def is_prefix(self, prefix: str) -> bool:
-        raise NotImplementedError("method is_prefix") # TODO: implement your code here
+        if self.traverse(prefix) is not None:
+            return True
+        return False
 
     def contains(self, word: str) -> bool:
-        raise NotImplementedError("method contains") # TODO: implement your code here
+        node = self.traverse(word)
+        if node is not None and node.is_word:
+            return True
+        return False
 
     def __iter__(self) -> typing.Iterator[str]:
-        raise NotImplementedError("method __iter__") # TODO: implement your code here
+        """Returns an iterator that iterates through all words in the TrieDictionary in alphabetical order."""
+        def dfs(node: TrieNode, prefix: str) -> Iterator[str]:
+            if node.is_word:
+                yield prefix
+            for letter in sorted(node.children.keys()):
+                yield from dfs(node.children[letter], prefix + letter)
 
+        return dfs(self.root, "")

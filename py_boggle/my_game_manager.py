@@ -72,7 +72,40 @@ class MyGameManager(BoggleGame):
         If `word` is not present on the board, return None.
         """
         word = word.lower()
-        raise NotImplementedError("method find_word_in_board") # TODO: implement your code here
+        for r in range(self.size):
+            for c in range(self.size):
+                if self.board[r][c] == word[0]:
+                    path = [(r,c)]
+                    visited = {(r,c)}
+                    result = self.dfs(r, c, 1, word, path, visited)
+                    if result:
+                        return result
+        return None
+    
+    def dfs(self, r: int, c: int, index: int, word: str,
+            path: List[Tuple[int, int]], visited: Set[Tuple[int, int]]) -> Optional[List[Tuple[int, int]]]:
+        """Depth-first search helper method to find the word on the board.
+        """
+        # Base case: full word found
+        if index == len(word):
+            return path.copy()
+        
+        # Explore neighbors (all 8 directions)
+        for dr in [-1, 0, 1]:
+            for dc in [-1, 0, 1]:
+                if dr == 0 and dc == 0:
+                    continue
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < self.size and 0 <= nc < self.size and (nr, nc) not in visited:
+                    if self.board[nr][nc] == word[index]:
+                        path.append((nr, nc))
+                        visited.add((nr, nc))
+                        result = self.dfs(nr, nc, index + 1, word, path, visited)
+                        if result:
+                            return result
+                        path.pop()
+                        visited.remove((nr, nc))
+        return None
 
     def add_word(self, word: str) -> int:
         """This method is provided for you, but feel free to change it.
@@ -110,7 +143,15 @@ class MyGameManager(BoggleGame):
         Returns:
             A set containing all words found on the board.
         """
-        raise NotImplementedError("method dictionary_driven_search") # TODO: implement your code here
+        found_words = set()
+
+        # Go through each word in the dictionary
+        for word in self.dictionary:
+            if len(word) > SHORT: # check that the word exists on the board
+                if self.find_word_in_board(word) is not None:
+                    found_words.add(word)
+        
+        return found_words
 
     def board_driven_search(self) -> Set[str]:
         """Find all words using a board-driven search.
@@ -122,4 +163,36 @@ class MyGameManager(BoggleGame):
         Returns:
             A set containing all words found on the board.
         """
-        raise NotImplementedError("method board_driven_search") # TODO: implement your code here
+        words = set()
+
+        for r in range(self.size):
+            for c in range(self.size):
+                visited = set()
+                self._board_dfs(r, c, "", visited, words)
+        return words
+    
+    def _board_dfs(self, r: int, c: int, prefix: str, visited: Set[Tuple[int, int]], words: Set[str]) -> None:
+        """Helper method for board-driven search using DFS.
+        """
+        if (r, c) in visited:
+            return
+        
+        prefix += self.board[r][c]
+        
+        if not self.dictionary.is_prefix(prefix):
+            return
+        
+        if len(prefix) > SHORT and self.dictionary.contains(prefix):
+            words.add(prefix)
+        
+        visited.add((r, c))
+        
+        for dr in [-1, 0, 1]:
+            for dc in [-1, 0, 1]:
+                if dr == 0 and dc == 0:
+                    continue
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < self.size and 0 <= nc < self.size:
+                    self._board_dfs(nr, nc, prefix, visited, words)
+        
+        visited.remove((r, c))
